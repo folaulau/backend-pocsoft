@@ -1,0 +1,74 @@
+name: Push to prod env
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      redis:
+        # Docker Hub image
+        image: redis
+        # Set health checks to wait until redis has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps port 6379 on service container to the host
+          - 6379:6379
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      - name: Install project dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install chalice
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Deploy to AWS
+        # --api-gateway-stage prod is required to deploy the latest code
+        run: chalice deploy --stage prod --api-gateway-stage prod
+
+      - name: Get Newest Api
+        id: newestApiId
+        run: |
+          echo "ApiId=$(aws apigateway get-rest-apis --query 'items | sort_by(@, &createdDate) | reverse(@)[0].id' --output text)" >> $GITHUB_ENV
+
+      - name: Delete Api Mapping
+        run: |
+          echo $ApiId
+          aws apigateway delete-base-path-mapping --domain-name backend.pocsoft.com --base-path '(none)'
+
+      - name: Create new Base Path Mapping
+        if: always()
+        run: |
+          aws apigateway create-base-path-mapping --domain-name backend.pocsoft.com --rest-api-id $ApiId --stage prod --base-path '(none)'
+
+      - name: Get Old Api
+        id: getOldApiId
+        run: |
+          echo "OldApiId=$(aws apigateway get-rest-apis --query 'items | sort_by(@, &createdDate) | reverse(@)[1].id' --output text)" >> $GITHUB_ENV
+
+      - name: Delete Old Api
+        run: |
+          echo $OldApiId
+          aws apigateway delete-rest-api --rest-api-id $OldApiId

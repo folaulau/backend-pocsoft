@@ -1,7 +1,30 @@
 from chalice import Chalice
+import os
+import logging
+
+from chalicelib.blueprints.sushi_api import sushi_api
 
 app = Chalice(app_name='backend-pocsoft')
+app.api_gateway_stage = ''
+app.api.cors = True
+app.debug = True
 
+os.environ['TZ'] = 'America/Denver'
+
+# Set logging format
+formatter = logging.Formatter(os.getenv('log_format', '%(asctime)s %(filename)s %(funcName)s %(lineno)d %(levelname)-8s %(message)s'), datefmt='%Y-%m-%d %I:%M:%S %p')
+app.log.handlers[0].setFormatter(formatter)
+app.log.setLevel(os.getenv('log_level', 'INFO'))
+
+
+app.register_blueprint(url_prefix="/sushi", blueprint=sushi_api, name_prefix="sushi")
+
+@app.middleware('all')
+def middleware(event, get_response):
+    # app.log.info("before event path={}".format(event.path))
+    response = get_response(event)
+    # app.log.info("after event")
+    return response
 
 @app.route('/')
 def index():

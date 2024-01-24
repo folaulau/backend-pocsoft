@@ -1,0 +1,43 @@
+{
+  "version": "2.0",
+  "app_name": "backend-pocsoft",
+  "tags": {
+    "application": "backend-pocsoft",
+    "owner": "Folau"
+  },
+  "environment_variables": {
+    "application_version": "1.0",
+    "s3_bucket": "db.pocsoft.com"
+  },
+  "stages": {
+    "local": {
+      "environment_variables": {
+        "env": "local",
+        "log_format": "%(asctime)s %(filename)s %(funcName)s %(lineno)d %(levelname)-8s %(message)s",
+        "log_level" : "DEBUG",
+        "db_identifier": "pocsoft-db"
+      }
+    },
+    "dev": {
+      "api_gateway_stage": "api"
+    },
+    "prod": {
+      "lambda_timeout": 600,
+      "lambda_memory_size": 256,
+      "api_gateway_stage": "prod",
+      "api_gateway_name": "pocsoft",
+      "environment_variables": {
+        "env": "prod",
+        "log_format": "%(filename)s %(funcName)s %(lineno)d %(levelname)-8s %(message)s",
+        "log_level" : "INFO",
+        "db_identifier": "pocsoft-db"
+      },
+      "lambda_functions": {
+        "run_stock_work": {
+          "lambda_memory_size": 300,
+          "lambda_timeout": 120
+        }
+      }
+    }
+  }
+}
