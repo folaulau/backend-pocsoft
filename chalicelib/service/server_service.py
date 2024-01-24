@@ -26,7 +26,7 @@ class ServerService(object):
         self.s3_client = session.client('s3')
         self.project_config = project_config
 
-    def get_ecs_service_status(self) -> dict:
+    def get_ecs_api_service_status(self) -> dict:
 
         result = {}
 
@@ -34,14 +34,14 @@ class ServerService(object):
 
         self.logger.info("ecs_cluster: "+ecs_cluster)
 
-        ecs_service = self.project_config.ecs_service_name
+        ecs_api_service = self.project_config.ecs_api_service_name
 
-        self.logger.info("ecs_service: "+ecs_service)
+        self.logger.info("ecs_api_service: "+ecs_api_service)
 
         try:
             response = self.ecs_client.describe_services(
                 cluster=ecs_cluster,
-                services=[ecs_service]
+                services=[ecs_api_service]
             )
 
             if len(response['services']) > 0:
@@ -52,17 +52,60 @@ class ServerService(object):
                 running_count = service['runningCount']
                 pending_count = service['pendingCount']
 
-                result['ecs_status'] = status
-                result['ecs_desired_count'] = desired_count
-                result['ecs_running_count'] = running_count
-                result['ecs_pending_count'] = pending_count
+                result['ecs_api_status'] = status
+                result['ecs_api_desired_count'] = desired_count
+                result['ecs_api_running_count'] = running_count
+                result['ecs_api_pending_count'] = pending_count
 
         except Exception as ex:
             self.logger.warning("Exception, msg=%s", str(ex))
-            result["ecs_status"] = str(ex)
-            result['ecs_desired_count'] = 0
+            result["ecs_api_status"] = str(ex)
+            result['ecs_api_desired_count'] = 0
 
         return result
+
+    def get_ecs_graphql_service_status(self) -> dict:
+
+        result = {}
+
+        ecs_cluster = self.project_config.ecs_cluster_name
+
+        self.logger.info("ecs_cluster: "+ecs_cluster)
+
+        ecs_graphql_service = self.project_config.ecs_graphql_service_name
+
+        self.logger.info("ecs_graphql_service: "+ecs_graphql_service)
+
+        if ecs_graphql_service is None:
+            result["ecs_graphql_status"] = "no graphql service"
+            return result
+
+        try:
+            response = self.ecs_client.describe_services(
+                cluster=ecs_cluster,
+                services=[ecs_graphql_service]
+            )
+
+            if len(response['services']) > 0:
+
+                service = response['services'][0]
+                status = service['status']
+                desired_count = service['desiredCount']
+                running_count = service['runningCount']
+                pending_count = service['pendingCount']
+
+                result['ecs_graphql_status'] = status
+                result['ecs_graphql_desired_count'] = desired_count
+                result['ecs_graphql_running_count'] = running_count
+                result['ecs_graphql_pending_count'] = pending_count
+
+        except Exception as ex:
+            self.logger.warning("Exception, msg=%s", str(ex))
+            result["ecs_graphql_status"] = str(ex)
+            result['ecs_graphql_desired_count'] = 0
+
+        return result
+
     def get_database_status(self) -> dict:
 
         result = {}
@@ -84,21 +127,6 @@ class ServerService(object):
         except Exception as ex:
             self.logger.warning("Exception, msg=%s", str(ex))
             result['db_status'] = str(ex)
-
-        return result
-
-
-    def turn_on_ecs_service(self) -> dict:
-
-        result = {}
-
-        database_status = self.turn_on_database_server()
-
-        result.update(database_status)
-
-        ecs_service_status = self.turn_on_api_server()
-
-        result.update(ecs_service_status)
 
         return result
 
@@ -147,34 +175,15 @@ class ServerService(object):
 
         return result
 
-
-    def turn_off_api_services(self) -> dict:
-
-        result = {}
-
-        database_status = self.turn_off_database_server()
-
-        result.update(database_status)
-
-        ecs_api_service_status = self.turn_off_api_server()
-
-        result.update(ecs_api_service_status)
-
-        ecs_job_service_status = self.turn_off_job_server()
-
-        result.update(ecs_job_service_status)
-
-        return result
-
-    def turn_on_api_server(self):
+    def turn_on_ecs_api_service(self):
 
         result = {}
 
-        ecs_api_cluster = os.getenv("ecs_api_cluster")
+        ecs_cluster = self.project_config.ecs_cluster_name
 
-        self.logger.info("ecs_api_cluster: "+ecs_api_cluster)
+        self.logger.info("ecs_cluster: "+ecs_cluster)
 
-        ecs_api_service = os.getenv("ecs_api_service")
+        ecs_api_service = self.project_config.ecs_api_service_name
 
         self.logger.info("ecs_api_service: "+ecs_api_service)
 
@@ -182,7 +191,7 @@ class ServerService(object):
 
         try:
             response = self.ecs_client.update_service(
-                cluster=ecs_api_cluster,
+                cluster=ecs_cluster,
                 service=ecs_api_service,
                 desiredCount=1
             )
@@ -194,10 +203,10 @@ class ServerService(object):
                 running_count = service['runningCount']
                 pending_count = service['pendingCount']
 
-                result['ecs_api_status'] = status
-                result['ecs_api_desired_count'] = desired_count
-                result['ecs_api_running_count'] = running_count
-                result['ecs_api_pending_count'] = pending_count
+                result['ecs_status'] = status
+                result['ecs_desired_count'] = desired_count
+                result['ecs_running_count'] = running_count
+                result['ecs_pending_count'] = pending_count
 
             elif response is not None and "service" in response:
                 service = response['service']
@@ -218,113 +227,7 @@ class ServerService(object):
 
         return result
 
-    def turn_on_graphql_server(self):
-
-        result = {}
-
-        ecs_api_cluster = os.getenv("ecs_api_cluster")
-
-        self.logger.info("ecs_api_cluster: "+ecs_api_cluster)
-
-        ecs_graphql_service = os.getenv("ecs_graphql_service")
-
-        self.logger.info("ecs_graphql_service: "+ecs_graphql_service)
-
-        # Turn on ECS
-
-        try:
-            response = self.ecs_client.update_service(
-                cluster=ecs_api_cluster,
-                service=ecs_graphql_service,
-                desiredCount=1
-            )
-
-            if response is not None and "services" in response and len(response['services']) > 0:
-                service = response['services'][0]
-                status = service['status']
-                desired_count = service['desiredCount']
-                running_count = service['runningCount']
-                pending_count = service['pendingCount']
-
-                result['ecs_graphql_status'] = status
-                result['ecs_graphql_desired_count'] = desired_count
-                result['ecs_graphql_running_count'] = running_count
-                result['ecs_graphql_pending_count'] = pending_count
-
-            elif response is not None and "service" in response:
-                service = response['service']
-                status = service['status']
-                desired_count = service['desiredCount']
-                running_count = service['runningCount']
-                pending_count = service['pendingCount']
-
-                result['ecs_graphql_status'] = status
-                result['ecs_graphql_desired_count'] = desired_count
-                result['ecs_graphql_running_count'] = running_count
-                result['ecs_graphql_pending_count'] = pending_count
-
-        except Exception as ex:
-            self.logger.warning("Exception, msg=%s", str(ex))
-            result["ecs_graphql_status"] = str(ex)
-            result['ecs_graphql_desired_count'] = 0
-
-        return result
-
-    def turn_on_job_server(self):
-
-        result = {}
-
-        ecs_api_cluster = os.getenv("ecs_api_cluster")
-
-        self.logger.info("ecs_api_cluster: "+ecs_api_cluster)
-
-        ecs_service = os.getenv("ecs_job_service")
-
-        self.logger.info("ecs_service: "+ecs_service)
-
-        # Turn on ECS
-
-        try:
-            response = self.ecs_client.update_service(
-                cluster=ecs_api_cluster,
-                service=ecs_service,
-                desiredCount=1
-            )
-
-            if response is not None and "services" in response and len(response['services']) > 0:
-                service = response['services'][0]
-                status = service['status']
-                desired_count = service['desiredCount']
-                running_count = service['runningCount']
-                pending_count = service['pendingCount']
-
-                result['ecs_job_status'] = status
-                result['ecs_job_desired_count'] = desired_count
-                result['ecs_job_running_count'] = running_count
-                result['ecs_job_pending_count'] = pending_count
-                result['ecs_job_desired_count'] = desired_count
-
-            elif response is not None and "service" in response:
-                service = response['service']
-                status = service['status']
-                desired_count = service['desiredCount']
-                running_count = service['runningCount']
-                pending_count = service['pendingCount']
-
-                result['ecs_job_status'] = status
-                result['ecs_job_running_count'] = running_count
-                result['ecs_job_pending_count'] = pending_count
-                result['ecs_job_desired_count'] = desired_count
-
-        except Exception as ex:
-            self.logger.warning("Exception, msg=%s", str(ex))
-            result["ecs_job_status"] = str(ex)
-            result['ecs_job_desired_count'] = 0
-
-        return result
-
-
-    def turn_off_ecs_service(self):
+    def turn_off_ecs_api_service(self):
 
         result = {}
 
@@ -332,16 +235,16 @@ class ServerService(object):
 
         self.logger.info("ecs_cluster: "+ecs_cluster)
 
-        ecs_service = self.project_config.ecs_service_name
+        ecs_api_service = self.project_config.ecs_api_service_name
 
-        self.logger.info("ecs_service: "+ecs_service)
+        self.logger.info("ecs_service: "+ecs_api_service)
 
         # Turn on ECS
 
         try:
             response = self.ecs_client.update_service(
                 cluster=ecs_cluster,
-                service=ecs_service,
+                service=ecs_api_service,
                 desiredCount=0
             )
 
@@ -364,15 +267,123 @@ class ServerService(object):
                 running_count = service['runningCount']
                 pending_count = service['pendingCount']
 
+                result['ecs_api_status'] = status
+                result['ecs_api_desired_count'] = desired_count
+                result['ecs_api_running_count'] = running_count
+                result['ecs_api_pending_count'] = pending_count
+
+        except Exception as ex:
+            self.logger.warning("Exception, msg=%s", str(ex))
+            result["ecs_api_status"] = str(ex)
+            result['ecs_api_desired_count'] = 0
+
+        return result
+
+    def turn_on_ecs_graphql_service(self):
+
+        result = {}
+
+        ecs_cluster = self.project_config.ecs_cluster_name
+
+        self.logger.info("ecs_cluster: "+ecs_cluster)
+
+        ecs_graphql_service = self.project_config.ecs_graphql_service_name
+
+        self.logger.info("ecs_graphql_service: "+ecs_graphql_service)
+
+        if ecs_graphql_service is None:
+            result["ecs_graphq_status"] = "no graphql service"
+            return result
+
+        # Turn on ECS
+
+        try:
+            response = self.ecs_client.update_service(
+                cluster=ecs_cluster,
+                service=ecs_graphql_service,
+                desiredCount=1
+            )
+
+            if response is not None and "services" in response and len(response['services']) > 0:
+                service = response['services'][0]
+                status = service['status']
+                desired_count = service['desiredCount']
+                running_count = service['runningCount']
+                pending_count = service['pendingCount']
+
                 result['ecs_status'] = status
                 result['ecs_desired_count'] = desired_count
                 result['ecs_running_count'] = running_count
                 result['ecs_pending_count'] = pending_count
 
+            elif response is not None and "service" in response:
+                service = response['service']
+                status = service['status']
+                desired_count = service['desiredCount']
+                running_count = service['runningCount']
+                pending_count = service['pendingCount']
+
+                result['ecs_graphql_status'] = status
+                result['ecs_graphql_desired_count'] = desired_count
+                result['ecs_graphql_running_count'] = running_count
+                result['ecs_graphql_pending_count'] = pending_count
+
         except Exception as ex:
             self.logger.warning("Exception, msg=%s", str(ex))
-            result["ecs_status"] = str(ex)
-            result['ecs_desired_count'] = 0
+            result["ecs_graphql_status"] = str(ex)
+            result['ecs_graphql_desired_count'] = 0
+
+        return result
+
+    def turn_off_ecs_graphl_service(self):
+
+        result = {}
+
+        ecs_cluster = self.project_config.ecs_cluster_name
+
+        self.logger.info("ecs_cluster: "+ecs_cluster)
+
+        ecs_graphql_service = self.project_config.ecs_graphql_service_name
+
+        self.logger.info("ecs_graphql_service: "+ecs_graphql_service)
+
+        # Turn on ECS
+
+        try:
+            response = self.ecs_client.update_service(
+                cluster=ecs_cluster,
+                service=ecs_graphql_service,
+                desiredCount=0
+            )
+
+            if response is not None and "services" in response and len(response['services']) > 0:
+                service = response['services'][0]
+                status = service['status']
+                desired_count = service['desiredCount']
+                running_count = service['runningCount']
+                pending_count = service['pendingCount']
+
+                result['ecs_status'] = status
+                result['ecs_desired_count'] = desired_count
+                result['ecs_running_count'] = running_count
+                result['ecs_pending_count'] = pending_count
+
+            elif response is not None and "service" in response:
+                service = response['service']
+                status = service['status']
+                desired_count = service['desiredCount']
+                running_count = service['runningCount']
+                pending_count = service['pendingCount']
+
+                result['ecs_graphql_status'] = status
+                result['ecs_graphql_desired_count'] = desired_count
+                result['ecs_graphql_running_count'] = running_count
+                result['ecs_graphql_pending_count'] = pending_count
+
+        except Exception as ex:
+            self.logger.warning("Exception, msg=%s", str(ex))
+            result["ecs_graphql_status"] = str(ex)
+            result['ecs_graphql_desired_count'] = 0
 
         return result
     def any_user_activity(self) -> bool:
@@ -400,7 +411,7 @@ class ServerService(object):
 
         s3_bucket = os.getenv('s3_bucket')
 
-        s3_key = self.env+'_db_last_activity.json'
+        s3_key = 'db_last_activity_' + self.env + '.json'
 
         self.logger.info("s3_bucket={}, s3_key={}".format(s3_bucket, s3_key))
 
@@ -417,6 +428,39 @@ class ServerService(object):
             # self.logger.info("file_content={} type={}, createdAt={}, type={}".format(last_activity, type(last_activity), last_activity.get('createdAt'), type(last_activity.get('createdAt'))))
 
             created_at_str = last_activity.get('createdAt')
+
+            last_created_at = datetime.strptime(created_at_str, "%Y-%m-%dT%H:%M:%S.%f")
+
+            utah_tz = pytz.timezone('America/Denver')
+
+            last_created_at = utah_tz.localize(last_created_at)
+
+        except (Exception) as error:
+            self.logger.warning("Exception, msg={}".format(error))
+
+        return last_created_at
+
+    def get_project_db_latest_timestamp(self) -> datetime:
+
+        last_created_at = None
+
+        s3_bucket = os.getenv('s3_bucket')
+
+        s3_key = 'db_last_activity_'+self.env+'.json'
+
+        self.logger.info("s3_bucket={}, s3_key={}".format(s3_bucket, s3_key))
+
+        try:
+
+            s3_response = self.s3_client.get_object(Bucket=s3_bucket, Key=s3_key)
+
+            last_activity = s3_response['Body'].read().decode('utf-8')
+
+            last_activity = json.loads(last_activity)
+
+            project_last_activity = json.loads(last_activity.get(self.project_config.name))
+
+            created_at_str = project_last_activity.get('createdAt')
 
             last_created_at = datetime.strptime(created_at_str, "%Y-%m-%dT%H:%M:%S.%f")
 

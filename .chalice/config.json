@@ -15,7 +15,9 @@
         "env": "local",
         "log_format": "%(asctime)s %(filename)s %(funcName)s %(lineno)d %(levelname)-8s %(message)s",
         "log_level" : "DEBUG",
-        "db_identifier": "pocsoft-db"
+        "db_identifier": "pocsoft-db",
+        "s3_bucket": "db.pocsoft.com",
+        "ecs_cluster": "pocsoft"
       }
     },
     "dev": {
@@ -30,7 +32,9 @@
         "env": "prod",
         "log_format": "%(filename)s %(funcName)s %(lineno)d %(levelname)-8s %(message)s",
         "log_level" : "INFO",
-        "db_identifier": "pocsoft-db"
+        "db_identifier": "pocsoft-db",
+        "s3_bucket": "db.pocsoft.com",
+        "ecs_cluster": "pocsoft"
       },
       "lambda_functions": {
         "run_stock_work": {
