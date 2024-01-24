@@ -63,8 +63,6 @@ def sushi_get_all_servers_status():
 def sushi_inactivity_shutoff(event, context):
     app.log.info("sushi_inactivity_shutoff")
 
-    sushi_service = SushiService()
-
     status = sushi_service.shutoff_services_for_inactivity()
 
     return status
