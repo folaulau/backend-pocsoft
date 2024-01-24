@@ -14,7 +14,7 @@ class SushiService(object):
         self.logger = logging.getLogger("backend-pocsoft")
         self.env = os.getenv("env")
 
-        self.project_config = ProjectConfig(name="sushi", ecs_api_service_name="sushi-api", ecs_graphql_service_name=None)
+        self.project_config = ProjectConfig(name="sushi", ecs_api_service_name="sushi-api", ecs_graphql_service_name="sushi-graphql-service")
         self.server_service = ServerService(project_config=self.project_config)
 
     def get_servers_status(self):
