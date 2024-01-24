@@ -4,6 +4,8 @@ import logging
 
 from chalicelib.blueprints.sushi_api import sushi_api
 
+from chalicelib.service.sushi_service import SushiService
+
 app = Chalice(app_name='backend-pocsoft')
 app.api_gateway_stage = ''
 app.api.cors = True
@@ -28,6 +30,16 @@ def middleware(event, get_response):
 @app.route('/')
 def index():
     return {'app': 'pocsoft'}
+
+@sushi_api.lambda_function(name="inactivity_shutoff")
+def inactivity_shutoff(event, context):
+    sushi_api.log.info("inactivity_shutoff")
+
+    sushi_service = SushiService()
+
+    status = sushi_service.shutoff_services_for_inactivity()
+
+    return status
 
 
 # The view function above will return {"hello": "world"}
