@@ -16,7 +16,6 @@ formatter = logging.Formatter(os.getenv('log_format', '%(asctime)s %(filename)s 
 app.log.handlers[0].setFormatter(formatter)
 app.log.setLevel(os.getenv('log_level', 'INFO'))
 
-
 app.register_blueprint(url_prefix="/sushi", blueprint=sushi_api, name_prefix="sushi")
 
 @app.middleware('all')
@@ -28,7 +27,7 @@ def middleware(event, get_response):
 
 @app.route('/')
 def index():
-    return {'hello': 'world'}
+    return {'app': 'pocsoft'}
 
 
 # The view function above will return {"hello": "world"}
