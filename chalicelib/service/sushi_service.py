@@ -17,6 +17,47 @@ class SushiService(object):
         self.project_config = ProjectConfig(name="sushi", ecs_api_service_name="sushi-api", ecs_graphql_service_name=None)
         self.server_service = ServerService(project_config=self.project_config)
 
+    def get_servers_status(self):
+        status = {}
+
+        ecs_api_service_status = self.server_service.get_ecs_api_service_status()
+
+        status.update(ecs_api_service_status)
+
+        ecs_graphql_service_status = self.server_service.get_ecs_graphql_service_status()
+
+        status.update(ecs_graphql_service_status)
+
+        database_status = self.server_service.get_database_status()
+
+        status.update(database_status)
+
+        self.logger.info("status={}".format(status))
+
+        return status
+
+    def turnon_servers(self):
+        status = {}
+
+        statuses = self.get_servers_status()
+
+        status['prev_status'] = statuses
+
+        server_status = self.server_service.turn_on_database_server()
+
+        status.update(server_status)
+
+        server_status = self.server_service.turn_on_ecs_api_service()
+
+        status.update(server_status)
+
+        server_status = self.server_service.turn_on_ecs_graphql_service()
+
+        status.update(server_status)
+
+        self.logger.info("status={}".format(status))
+
+        return status
 
     def shutoff_services_for_inactivity(self):
         status = {}
@@ -57,25 +98,6 @@ class SushiService(object):
             if ecs_graphql_desired_count > 0:
                 server_status = self.server_service.turn_off_ecs_graphl_service()
                 status.update(server_status)
-
-        return status
-
-    def get_servers_status(self):
-        status = {}
-
-        ecs_api_service_status = self.server_service.get_ecs_api_service_status()
-
-        status.update(ecs_api_service_status)
-
-        ecs_graphql_service_status = self.server_service.get_ecs_graphql_service_status()
-
-        status.update(ecs_graphql_service_status)
-
-        database_status = self.server_service.get_database_status()
-
-        status.update(database_status)
-
-        self.logger.info("status={}".format(status))
 
         return status
 
