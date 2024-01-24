@@ -78,6 +78,7 @@ class ServerService(object):
 
         if ecs_graphql_service is None:
             result["ecs_graphql_status"] = "no graphql service"
+            result['ecs_graphql_desired_count'] = 0
             return result
 
         try:
@@ -401,10 +402,31 @@ class ServerService(object):
 
         self.logger.info("created_at:{}, _mins_ago={}".format(last_created_at, _mins_ago))
 
-        if last_created_at < _mins_ago:
+        if last_created_at > _mins_ago:
             return True
 
         return False
+
+    def any_project_user_activity(self) -> bool:
+
+        last_created_at = self.get_project_db_latest_timestamp()
+
+        if last_created_at is None:
+            return False
+
+        utah_tz = pytz.timezone('America/Denver')
+
+        utah_time_now = datetime.now(utah_tz)
+
+        _mins_ago = utah_time_now - timedelta(minutes=60)
+
+        self.logger.info("created_at:{}, _mins_ago={}".format(last_created_at, _mins_ago))
+
+        if last_created_at > _mins_ago:
+            return True
+
+        return False
+
     def get_db_latest_timestamp(self) -> datetime:
 
         last_created_at = None
@@ -424,6 +446,8 @@ class ServerService(object):
             last_activity = s3_response['Body'].read().decode('utf-8')
 
             last_activity = json.loads(last_activity)
+
+            self.logger.info("last_activity={}".format(last_activity))
 
             # self.logger.info("file_content={} type={}, createdAt={}, type={}".format(last_activity, type(last_activity), last_activity.get('createdAt'), type(last_activity.get('createdAt'))))
 
@@ -458,7 +482,9 @@ class ServerService(object):
 
             last_activity = json.loads(last_activity)
 
-            project_last_activity = json.loads(last_activity.get(self.project_config.name))
+            self.logger.info("last_activity={}".format(last_activity))
+
+            project_last_activity = last_activity.get(self.project_config.name)
 
             created_at_str = project_last_activity.get('createdAt')
 

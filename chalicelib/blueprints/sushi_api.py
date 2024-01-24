@@ -16,9 +16,17 @@ def inactivity_shutoff(event, context):
 
     return status;
 
+@sushi_api.route("/turnoff-servers-on-inactivity", methods=["POST"])
+def turnoff_servers_for_inactivity():
+    sushi_api.log.info("turnoff_servers_for_inactivity...")
+    status = sushi_service.shutoff_services_for_inactivity();
+    return status;
+
+
 @sushi_api.route("/servers-status", methods=["GET"])
 def get_all_servers_status():
     sushi_api.log.info("get_all_servers_status...")
     status = sushi_service.get_servers_status()
     return status
+
 
