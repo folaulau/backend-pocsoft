@@ -59,6 +59,37 @@ class SushiService(object):
 
         return status
 
+    def turnoff_servers(self):
+        status = {}
+
+        statuses = self.get_servers_status()
+
+        status['prev_status'] = statuses
+
+        any_project_user_activity = self.server_service.any_project_user_activity()
+        self.logger.info("name={}, any_project_user_activity={}".format(self.project_config.name, any_project_user_activity))
+
+        any_user_activity = self.server_service.any_user_activity()
+        self.logger.info("any_user_activity={}".format(any_user_activity))
+
+        db_status = statuses["db_status"]
+        ecs_api_desired_count = statuses["ecs_api_desired_count"]
+        ecs_graphql_desired_count = statuses["ecs_graphql_desired_count"]
+
+        if db_status.lower() in ["available"] and any_user_activity is False:
+            server_status = self.server_service.turn_off_database_server()
+            status.update(server_status)
+
+        if ecs_api_desired_count > 0:
+            server_status = self.server_service.turn_off_ecs_api_service()
+            status.update(server_status)
+
+        if ecs_graphql_desired_count > 0:
+            server_status = self.server_service.turn_off_ecs_graphl_service()
+            status.update(server_status)
+
+        return status
+
     def shutoff_services_for_inactivity(self):
         status = {}
 
