@@ -32,11 +32,11 @@ class ServerService(object):
 
         ecs_cluster = self.project_config.ecs_cluster_name
 
-        self.logger.info("ecs_cluster: "+ecs_cluster)
+        self.logger.info("ecs_cluster: {}".format(ecs_cluster))
 
         ecs_api_service = self.project_config.ecs_api_service_name
 
-        self.logger.info("ecs_api_service: "+ecs_api_service)
+        self.logger.info("ecs_api_service: {}".format(ecs_api_service))
 
         try:
             response = self.ecs_client.describe_services(
@@ -70,11 +70,11 @@ class ServerService(object):
 
         ecs_cluster = self.project_config.ecs_cluster_name
 
-        self.logger.info("ecs_cluster: "+ecs_cluster)
+        self.logger.info("ecs_cluster: {}".format(ecs_cluster))
 
         ecs_graphql_service = self.project_config.ecs_graphql_service_name
 
-        self.logger.info("ecs_graphql_service: "+ecs_graphql_service)
+        self.logger.info("ecs_graphql_service: {}".format(ecs_graphql_service))
 
         if ecs_graphql_service is None:
             result["ecs_graphql_status"] = "no graphql service"
@@ -181,11 +181,11 @@ class ServerService(object):
 
         ecs_cluster = self.project_config.ecs_cluster_name
 
-        self.logger.info("ecs_cluster: "+ecs_cluster)
+        self.logger.info("ecs_cluster: {}".format(ecs_cluster))
 
         ecs_api_service = self.project_config.ecs_api_service_name
 
-        self.logger.info("ecs_api_service: "+ecs_api_service)
+        self.logger.info("ecs_api_service: {}".format(ecs_api_service))
 
         # Turn on ECS
 
@@ -233,11 +233,11 @@ class ServerService(object):
 
         ecs_cluster = self.project_config.ecs_cluster_name
 
-        self.logger.info("ecs_cluster: "+ecs_cluster)
+        self.logger.info("ecs_cluster: {}".format(ecs_cluster))
 
         ecs_api_service = self.project_config.ecs_api_service_name
 
-        self.logger.info("ecs_service: "+ecs_api_service)
+        self.logger.info("ecs_service: {}".format(ecs_api_service))
 
         # Turn on ECS
 
@@ -285,11 +285,11 @@ class ServerService(object):
 
         ecs_cluster = self.project_config.ecs_cluster_name
 
-        self.logger.info("ecs_cluster: "+ecs_cluster)
+        self.logger.info("ecs_cluster: {}".format(ecs_cluster))
 
         ecs_graphql_service = self.project_config.ecs_graphql_service_name
 
-        self.logger.info("ecs_graphql_service: "+ecs_graphql_service)
+        self.logger.info("ecs_graphql_service: {}".format(ecs_graphql_service))
 
         if ecs_graphql_service is None:
             result["ecs_graphq_status"] = "no graphql service"
@@ -341,11 +341,11 @@ class ServerService(object):
 
         ecs_cluster = self.project_config.ecs_cluster_name
 
-        self.logger.info("ecs_cluster: "+ecs_cluster)
+        self.logger.info("ecs_cluster: {}".format(ecs_cluster))
 
         ecs_graphql_service = self.project_config.ecs_graphql_service_name
 
-        self.logger.info("ecs_graphql_service: "+ecs_graphql_service)
+        self.logger.info("ecs_graphql_service: {}".format(ecs_graphql_service))
 
         # Turn on ECS
 
