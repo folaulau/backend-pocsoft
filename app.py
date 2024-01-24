@@ -2,7 +2,7 @@ from chalice import Chalice
 import os
 import logging
 
-from chalicelib.blueprints.sushi_api import sushi_api
+# from chalicelib.blueprints.sushi_api import sushi_api
 
 from chalicelib.service.sushi_service import SushiService
 
@@ -18,7 +18,9 @@ formatter = logging.Formatter(os.getenv('log_format', '%(asctime)s %(filename)s 
 app.log.handlers[0].setFormatter(formatter)
 app.log.setLevel(os.getenv('log_level', 'INFO'))
 
-app.register_blueprint(url_prefix="/sushi", blueprint=sushi_api, name_prefix="sushi")
+sushi_service = SushiService()
+
+# app.register_blueprint(url_prefix="/sushi", blueprint=sushi_api, name_prefix="sushi")
 
 @app.middleware('all')
 def middleware(event, get_response):
@@ -31,9 +33,35 @@ def middleware(event, get_response):
 def index():
     return {'app': 'pocsoft'}
 
-@sushi_api.lambda_function(name="inactivity_shutoff")
-def inactivity_shutoff(event, context):
-    sushi_api.log.info("inactivity_shutoff")
+
+@app.route("/sushi/turnon-servers", methods=["POST"])
+def sushi_turnon_servers():
+    app.log.info("turnon_servers...")
+    status = sushi_service.turnon_servers()
+    return status
+
+@app.route("/sushi/turnoff-servers", methods=["POST"])
+def sushi_turnoff_servers():
+    app.log.info("turnoff_servers...")
+    status = sushi_service.turnoff_servers()
+    return status
+
+@app.route("/sushi/turnoff-servers-on-inactivity", methods=["POST"])
+def sushi_turnoff_servers_for_inactivity():
+    app.log.info("turnoff_servers_for_inactivity...")
+    status = sushi_service.shutoff_services_for_inactivity()
+    return status
+
+
+@app.route("/sushi/servers-status", methods=["GET"])
+def sushi_get_all_servers_status():
+    app.log.info("get_all_servers_status...")
+    status = sushi_service.get_servers_status()
+    return status
+
+@app.lambda_function(name="sushi_inactivity_shutoff")
+def sushi_inactivity_shutoff(event, context):
+    app.log.info("sushi_inactivity_shutoff")
 
     sushi_service = SushiService()
 
