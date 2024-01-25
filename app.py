@@ -2,6 +2,8 @@ from chalice import Chalice
 import os
 import logging
 
+from chalicelib.service.project_config import ProjectConfig
+from chalicelib.service.server_service import ServerService
 # from chalicelib.blueprints.sushi_api import sushi_api
 
 from chalicelib.service.sushi_service import SushiService
@@ -67,6 +69,16 @@ def sushi_inactivity_shutoff(event, context):
 
     status = sushi_service.shutoff_services_for_inactivity()
 
+    return status
+
+# ================= General PocSoft endpoints =============
+
+@app.route("/turnoff-database", methods=["POST"])
+def turnoff_database():
+    app.log.info("turnoff_database...")
+    project_config = ProjectConfig()
+    server_service = ServerService(project_config)
+    status = server_service.turn_off_database_server()
     return status
 
 
