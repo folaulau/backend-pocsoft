@@ -464,6 +464,31 @@ class ServerService(object):
 
         return last_created_at
 
+    def get_latest_activity(self) -> dict:
+
+        last_activity = {}
+
+        s3_bucket = os.getenv('s3_bucket')
+
+        s3_key = 'db_last_activity_' + self.env + '.json'
+
+        self.logger.info("s3_bucket={}, s3_key={}".format(s3_bucket, s3_key))
+
+        try:
+
+            s3_response = self.s3_client.get_object(Bucket=s3_bucket, Key=s3_key)
+
+            last_activity = s3_response['Body'].read().decode('utf-8')
+
+            last_activity = json.loads(last_activity)
+
+            return last_activity
+
+        except (Exception) as error:
+            self.logger.warning("Exception, msg={}".format(error))
+
+        return last_activity
+
     def get_project_db_latest_timestamp(self) -> datetime:
 
         last_created_at = None

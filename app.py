@@ -81,6 +81,14 @@ def turnoff_database():
     status = server_service.turn_off_database_server()
     return status
 
+@app.route("/latest-activity", methods=["GET"])
+def get_latest_activity():
+    app.log.info("get_latest_activity...")
+    project_config = ProjectConfig()
+    server_service = ServerService(project_config)
+    latest_activity = server_service.get_latest_activity()
+    return latest_activity
+
 
 # The view function above will return {"hello": "world"}
 # whenever you make an HTTP GET request to '/'.
